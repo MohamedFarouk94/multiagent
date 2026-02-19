@@ -28,7 +28,7 @@ def invoke_prompt(data):
         agent_name=data['agent_name'],
         system_prompt=data['system_prompt'],
         history=data['history'],
-        message=data['user_text']
+        user_text=data['user_text']
     )
     return data
 

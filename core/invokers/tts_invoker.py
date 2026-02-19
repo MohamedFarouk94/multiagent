@@ -1,5 +1,5 @@
 from langchain_core.runnables import RunnableLambda
-from models.tts import synthesize_speech
+from core.models.tts import synthesize_speech
 
 def invoke_tts(data):
     data['agent_audio'] = synthesize_speech(data['agent_text'])
