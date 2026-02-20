@@ -29,7 +29,7 @@ def prepare_data(message: Message) -> Dict:
 
     # Only attach audio filename if message is audio
     if message.is_audio:
-        data["user_audio"] = f"user_{user.username}_{message.id}"
+        data["user_audio"] = f"user_{user.username}_{message.id}.wav"
 
     return data
 
