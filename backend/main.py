@@ -1,6 +1,14 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from . import models, schemas, database, auth
+from datetime import datetime
+from fastapi import File, UploadFile
+from fastapi.responses import FileResponse
+from typing import List
+import os
+
+from .history_manager import retrieve_messages_for_user
+from .chain_wrapper import prepare_data, run_chain
 
 app = FastAPI()
 
@@ -49,3 +57,239 @@ def do_action(username: str, current_user: models.User = Depends(auth.auth_manag
     # EXECUTE ACTIONS HERE
     #
     return {'message': 'ok'}
+
+
+####
+
+@app.post("/agents/", response_model=schemas.AgentSimple)
+def create_agent(
+    agent_data: schemas.AgentCreate,
+    db: Session = Depends(auth.get_db),
+    current_user: models.User = Depends(auth.auth_manager.get_current_user)
+):
+    new_agent = models.Agent(
+        name=agent_data.name,
+        system_prompt=agent_data.system_prompt,
+        user_id=current_user.id
+    )
+
+    db.add(new_agent)
+    db.commit()
+    db.refresh(new_agent)
+
+    return new_agent
+
+
+@app.get("/agents/", response_model=List[schemas.AgentSimple])
+def get_agents(
+    db: Session = Depends(auth.get_db),
+    current_user: models.User = Depends(auth.auth_manager.get_current_user)
+):
+    return db.query(models.Agent).filter(
+        models.Agent.user_id == current_user.id
+    ).all()
+
+
+@app.get("/agents/{agent_id}/", response_model=schemas.AgentDetail)
+def get_agent(
+    agent_id: int,
+    db: Session = Depends(auth.get_db),
+    current_user: models.User = Depends(auth.auth_manager.get_current_user)
+):
+    agent = db.query(models.Agent).filter(
+        models.Agent.id == agent_id,
+        models.Agent.user_id == current_user.id
+    ).first()
+
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+
+    return agent
+
+
+@app.post("/chats/", response_model=schemas.ChatSimple)
+def create_chat(
+    chat_data: schemas.ChatCreate,
+    db: Session = Depends(auth.get_db),
+    current_user: models.User = Depends(auth.auth_manager.get_current_user)
+):
+    agent = db.query(models.Agent).filter(
+        models.Agent.id == chat_data.agent_id,
+        models.Agent.user_id == current_user.id
+    ).first()
+
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+
+    name = chat_data.name or f"Chat_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
+
+    new_chat = models.Chat(
+        name=name,
+        agent_id=agent.id
+    )
+
+    db.add(new_chat)
+    db.commit()
+    db.refresh(new_chat)
+
+    return new_chat
+
+
+@app.get("/chats/{chat_id}/messages/", response_model=List[schemas.MessageResponse])
+def get_chat(
+    chat_id: int,
+    start_index: int = -1,
+    n: int = 10,
+    db: Session = Depends(auth.get_db),
+    current_user: models.User = Depends(auth.auth_manager.get_current_user)
+):
+    chat = db.query(models.Chat).join(models.Agent).filter(
+        models.Chat.id == chat_id,
+        models.Agent.user_id == current_user.id
+    ).first()
+
+    if not chat:
+        raise HTTPException(status_code=404, detail="Chat not found")
+
+    return retrieve_messages_for_user(chat, start_index, n)
+
+
+@app.post("/chats/{chat_id}/upload-audio/")
+def upload_audio(
+    chat_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(auth.get_db),
+    current_user: models.User = Depends(auth.auth_manager.get_current_user)
+):
+    chat = db.query(models.Chat).join(models.Agent).filter(
+        models.Chat.id == chat_id,
+        models.Agent.user_id == current_user.id
+    ).first()
+
+    if not chat:
+        raise HTTPException(status_code=404, detail="Chat not found")
+
+    message = models.Message(
+        chat_id=chat.id,
+        is_agent=False,
+        is_audio=True,
+        text=''
+    )
+
+    db.add(message)
+    db.commit()
+    db.refresh(message)
+
+    os.makedirs("backend/media", exist_ok=True)
+
+    file_path = f"backend/media/user_{current_user.username}_{message.id}.wav"
+
+    with open(file_path, "wb") as buffer:
+        buffer.write(file.file.read())
+
+    return {"message_id": message.id}
+
+
+@app.post("/send/", response_model=schemas.MessageResponse)
+def send(
+    payload: schemas.SendRequest,
+    db: Session = Depends(auth.get_db),
+    current_user: models.User = Depends(auth.auth_manager.get_current_user)
+):
+    chat = db.query(models.Chat).join(models.Agent).filter(
+        models.Chat.id == payload.chat_id,
+        models.Agent.user_id == current_user.id
+    ).first()
+
+    if not chat:
+        raise HTTPException(status_code=404, detail="Chat not found")
+
+    if payload.audio:
+        message = db.query(models.Message).filter(
+            models.Message.id == payload.audio,
+            models.Message.chat_id == chat.id
+        ).first()
+
+        if not message:
+            raise HTTPException(status_code=404, detail="Audio message not found")
+
+    else:
+        message = models.Message(
+            chat_id=chat.id,
+            is_agent=False,
+            is_audio=False,
+            text=payload.text
+        )
+        db.add(message)
+        db.commit()
+        db.refresh(message)
+
+    data = prepare_data(message)
+    output = run_chain(data)
+
+    agent_message = models.Message(
+        chat_id=chat.id,
+        is_agent=True,
+        is_audio=output.get("is_audio", False),
+        text=output.get("agent_text", "")
+    )
+
+    db.add(agent_message)
+    db.flush()
+
+    if agent_message.is_audio:
+        if "agent_audio_bytes" not in output:
+            raise HTTPException(status_code=500, detail="Audio bytes missing from chain output")
+
+        os.makedirs("backend/media", exist_ok=True)
+
+        agent_file = f'backend/media/agent_{current_user.username}_{agent_message.id}.mp3'
+
+        try:
+            with open(agent_file, "wb") as f:
+                f.write(output["agent_audio_bytes"])
+        except Exception:
+            db.rollback()
+            raise HTTPException(status_code=500, detail="Failed to save agent audio")
+
+    chat.last_message_at = datetime.utcnow()
+
+    db.commit()
+    db.refresh(agent_message)
+
+    return {
+        "id": agent_message.id,
+        "sent_at": agent_message.sent_at,
+        "sender": "agent",
+        "is_audio": agent_message.is_audio,
+        "text": "" if agent_message.is_audio else agent_message.text
+    }
+
+
+@app.get("/messages/{message_id}/download/")
+def download_audio(
+    message_id: int,
+    db: Session = Depends(auth.get_db),
+    current_user: models.User = Depends(auth.auth_manager.get_current_user)
+):
+    message = db.query(models.Message).join(models.Chat).join(models.Agent).filter(
+        models.Message.id == message_id,
+        models.Agent.user_id == current_user.id
+    ).first()
+
+    if not message:
+        raise HTTPException(status_code=404, detail="Message not found")
+
+    if not message.is_audio:
+        raise HTTPException(status_code=400, detail="Message is not audio")
+
+    if message.is_agent:
+        path = f"backend/media/agent_{current_user.username}_{message.id}.mp3"
+    else:
+        path = f"backend/media/user_{current_user.username}_{message.id}.wav"
+
+    if not os.path.exists(path):
+        raise HTTPException(status_code=404, detail="File not found")
+
+    return FileResponse(path, media_type="audio/mpeg")
+

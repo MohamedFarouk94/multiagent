@@ -75,6 +75,9 @@ class Message(Base):
     chat_id = Column(Integer, ForeignKey("chats.id", ondelete="CASCADE"), nullable=False, index=True)
 
     is_agent = Column(Boolean, nullable=False)
+
     is_audio = Column(Boolean, nullable=False)
+
+    text = Column(Text, nullable=False)
 
     chat = relationship("Chat", back_populates="messages")

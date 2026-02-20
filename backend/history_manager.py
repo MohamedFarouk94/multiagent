@@ -1,5 +1,5 @@
 from typing import List, Dict
-from models import Chat
+from .models import Chat
 
 
 # -------------------------------------------------------

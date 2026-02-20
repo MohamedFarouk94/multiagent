@@ -1,8 +1,8 @@
 from typing import Dict
 
-from models import Message
+from .models import Message
 from .core.chains import text_chain, audio_chain
-from history_manager import retrieve_messages_for_llm
+from .history_manager import retrieve_messages_for_llm
 
 
 # -------------------------------------------------------
@@ -19,6 +19,7 @@ def prepare_data(message: Message) -> Dict:
     user = agent.user
 
     data = {
+        "message_id": message.id,
         "agent_name": agent.name,
         "system_prompt": agent.system_prompt,
         "history": retrieve_messages_for_llm(chat),
@@ -29,7 +30,7 @@ def prepare_data(message: Message) -> Dict:
 
     # Only attach audio filename if message is audio
     if message.is_audio:
-        data["user_audio"] = f"user_{user.username}_{message.id}.wav"
+        data["user_audio"] = f"backend/media/user_{user.username}_{message.id}.wav"
 
     return data
 
