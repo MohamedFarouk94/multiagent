@@ -16,7 +16,7 @@ if __name__ == '__main__':
     text_data = data.copy()
 
     audio_data = data.copy()
-    audio_data['user_audio'] = "samples/input.wav"
+    audio_data['user_audio'] = "backend/media/input.wav"
 
     command = input("To test text chain, enter 1.\nTo text audio chain enter any thing else.\n")
 
@@ -27,6 +27,6 @@ if __name__ == '__main__':
 
     else:
         print('\nSpeak now!!')
-        os.system('arecord samples/input.wav')
+        os.system('arecord backend/media/input.wav')
         audio_data = audio_chain.invoke(audio_data)
-        os.system('ffplay -nodisp -autoexit samples/output.mp3')
+        os.system('ffplay -nodisp -autoexit backend/media/output.mp3')

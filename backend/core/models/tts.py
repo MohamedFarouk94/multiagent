@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def synthesize_speech(text: str, voice: str = "alloy", output_file: str = "samples/output.mp3"):
+def synthesize_speech(text: str, voice: str = "alloy", output_file: str = "backend/media/output.mp3"):
     """
     Converts text to speech using OpenAI TTS (gpt-4o-mini-tts)
     """

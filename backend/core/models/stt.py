@@ -20,5 +20,5 @@ def transcribe_audio(file_path: str, model: str = "gpt-4o-mini-transcribe") -> s
 if __name__ == "__main__":
     # print("KEY:", os.getenv("OPENAI_API_KEY"))
 
-    text = transcribe_audio("samples/input.wav")
+    text = transcribe_audio("backend/media/input.wav")
     print(text)
