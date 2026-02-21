@@ -1,0 +1,15 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: multiagent_backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      # Live-reload: mounts your local backend/ into the container so code
+      # changes are reflected immediately without rebuilding the image.
+      - ./backend:/app/backend
+    restart: unless-stopped

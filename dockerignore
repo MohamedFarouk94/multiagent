@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Tests (not needed inside the image)
+tests/
+
+# Frontend (separate concern)
+frontend/
+
+# Environment & secrets — never bake these into the image
+.env
+.env.*
+
+# Docker files themselves
+Dockerfile
+docker-compose*.yml
+
+# Version control
+.git/
+.gitignore
+.gitattributes
+
+# IDE & OS noise
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db
+
+# Coverage / test artifacts
+.coverage
+htmlcov/
+.pytest_cache/
