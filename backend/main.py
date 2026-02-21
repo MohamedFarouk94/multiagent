@@ -12,7 +12,15 @@ import os
 from .history_manager import retrieve_messages_for_user
 from .chain_wrapper import prepare_data, run_chain
 
-app = FastAPI()
+app = FastAPI(
+    title="MultiAgent API",
+    description="API for managing users, agents, chats, and messages with audio support",
+    version="1.0.0",
+    contact={
+        "name": "Mohamed Farouk",
+        "email": "mohamedfarouk1994@gmail.com",
+    },
+)
 
 models.Base.metadata.create_all(bind=database.engine)
 
