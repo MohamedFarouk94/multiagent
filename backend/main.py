@@ -25,7 +25,7 @@ app = FastAPI(
 models.Base.metadata.create_all(bind=database.engine)
 
 
-@app.post("/register/", response_model=schemas.UserResponse)
+@app.post("/register/", response_model=schemas.UserResponse, tags=['Auth'])
 def register_user(user: schemas.UserCreate, db: Session = Depends(auth.get_db)):
     email_existed = db.query(models.User).filter(models.User.email == user.email).first()
     if email_existed:
@@ -41,7 +41,7 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(auth.get_db)):
     return new_user
 
 
-@app.post("/login/", response_model=schemas.Token)
+@app.post("/login/", response_model=schemas.Token, tags=['Auth'])
 def login_user(form_data: schemas.UserLogin, db: Session = Depends(auth.get_db)):
     user = db.query(models.User).filter(models.User.username == form_data.username).first()
     if not user or not auth.auth_manager.verify_password(form_data.password, user.hashed_password):
@@ -51,12 +51,12 @@ def login_user(form_data: schemas.UserLogin, db: Session = Depends(auth.get_db))
     return {"access_token": token, "token_type": "bearer"}
 
 
-@app.get("/users/me/", response_model=schemas.UserResponse)
+@app.get("/users/me/", response_model=schemas.UserResponse, tags=['Auth'])
 def read_current_user(current_user: models.User = Depends(auth.auth_manager.get_current_user)):
     return current_user
 
 
-@app.post("/agents/", response_model=schemas.AgentSimple)
+@app.post("/agents/", response_model=schemas.AgentSimple, tags=['Agents'])
 def create_agent(
     agent_data: schemas.AgentCreate,
     db: Session = Depends(auth.get_db),
@@ -81,7 +81,7 @@ def create_agent(
     return new_agent
 
 
-@app.get("/agents/", response_model=List[schemas.AgentSimple])
+@app.get("/agents/", response_model=List[schemas.AgentSimple], tags=['Agents'])
 def get_agents(
     db: Session = Depends(auth.get_db),
     current_user: models.User = Depends(auth.auth_manager.get_current_user)
@@ -91,7 +91,7 @@ def get_agents(
     ).all()
 
 
-@app.get("/agents/{agent_id}/", response_model=schemas.AgentDetail)
+@app.get("/agents/{agent_id}/", response_model=schemas.AgentDetail, tags=['Agents'])
 def get_agent(
     agent_id: int,
     db: Session = Depends(auth.get_db),
@@ -108,7 +108,7 @@ def get_agent(
     return agent
 
 
-@app.post("/chats/", response_model=schemas.ChatSimple)
+@app.post("/chats/", response_model=schemas.ChatSimple, tags=['Chats'])
 def create_chat(
     chat_data: schemas.ChatCreate,
     db: Session = Depends(auth.get_db),
@@ -136,7 +136,7 @@ def create_chat(
     return new_chat
 
 
-@app.get("/chats/{chat_id}/messages/", response_model=List[schemas.MessageResponse])
+@app.get("/chats/{chat_id}/messages/", response_model=List[schemas.MessageResponse], tags=['Chats'])
 def get_chat(
     chat_id: int,
     start_index: int = -1,
@@ -155,7 +155,7 @@ def get_chat(
     return retrieve_messages_for_user(chat, start_index, n)
 
 
-@app.post("/chats/{chat_id}/upload-audio/")
+@app.post("/chats/{chat_id}/upload-audio/", tags=['Messages'])
 def upload_audio(
     chat_id: int,
     file: UploadFile = File(...),
@@ -191,7 +191,7 @@ def upload_audio(
     return {"message_id": message.id}
 
 
-@app.post("/send/", response_model=schemas.MessageResponse)
+@app.post("/send/", response_model=schemas.MessageResponse, tags=['Messages'])
 def send(
     payload: schemas.SendRequest,
     db: Session = Depends(auth.get_db),
@@ -267,7 +267,7 @@ def send(
     }
 
 
-@app.get("/messages/{message_id}/download/")
+@app.get("/messages/{message_id}/download/", tags=['Messages'])
 def download_audio(
     message_id: int,
     db: Session = Depends(auth.get_db),
