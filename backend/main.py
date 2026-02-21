@@ -1,4 +1,4 @@
-from sqlite3 import IntegrityError
+from sqlalchemy.exc import IntegrityError
 
 from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -60,13 +60,16 @@ def create_agent(
         user_id=current_user.id
     )
     try:
+        nested = db.begin_nested()   # ← savepoint created FIRST (no pending objects yet)
         db.add(new_agent)
-        db.commit()
+        db.flush()                   # ← flush happens inside the savepoint
+        nested.commit()
     except IntegrityError:
-        db.rollback()
+        nested.rollback()            # ← only rolls back to savepoint
         raise HTTPException(status_code=400, detail="Agent name already exists")
-    db.refresh(new_agent)
 
+    db.commit()
+    db.refresh(new_agent)
     return new_agent
 
 

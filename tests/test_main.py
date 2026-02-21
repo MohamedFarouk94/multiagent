@@ -1,5 +1,6 @@
 import os
 import shutil
+import uuid
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -75,6 +76,31 @@ def user(client):
 
 
 @pytest.fixture
+def second_user_headers(client):
+    import uuid
+    email = f"user_{uuid.uuid4()}@test.com"
+    password = "testpass123"
+
+    # Register using the correct route
+    register = client.post("/register/", json={
+        "username": email,
+        "email": email,
+        "password": password
+    })
+    assert register.status_code == 200
+
+    # Login using the correct route
+    login = client.post("/login/", json={
+        "username": email,
+        "password": password
+    })
+    assert login.status_code == 200
+    token = login.json()["access_token"]
+
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
 def token(client, user):
     response = client.post("/login/", json={
         "username": "testuser",
@@ -141,6 +167,28 @@ def test_get_agents(client, auth_headers):
     assert len(response.json()) == 1
 
 
+def test_agent_name_uniqueness_per_user(client, auth_headers, second_user_headers):
+    # User A creates an agent
+    response1 = client.post("/agents/", json={
+        "name": "My Unique Agent",
+        "system_prompt": "Prompt"
+    }, headers=auth_headers)
+    assert response1.status_code == 200
+
+    # User A tries to create same name again → should fail
+    response2 = client.post("/agents/", json={
+        "name": "My Unique Agent",
+        "system_prompt": "Another prompt"
+    }, headers=auth_headers)
+    assert response2.status_code in (400, 409)
+
+    # User B creates agent with same name → should succeed
+    response3 = client.post("/agents/", json={
+        "name": "My Unique Agent",
+        "system_prompt": "Other user prompt"
+    }, headers=second_user_headers)
+    assert response3.status_code == 200
+
 # ------------------------------------------------------------------
 # CHAT TESTS
 # ------------------------------------------------------------------
@@ -167,6 +215,27 @@ def test_create_chat(client, auth_headers):
 def test_chat_not_found(client, auth_headers):
     response = client.get("/chats/999/messages/", headers=auth_headers)
     assert response.status_code == 404
+
+
+def test_user_cannot_access_other_users_resources(client, auth_headers, second_user_headers):
+    # User A creates agent & chat
+    agent = client.post("/agents/", json={
+        "name": "Private Agent",
+        "system_prompt": "Private"
+    }, headers=auth_headers).json()
+
+    chat = client.post("/chats/", json={
+        "agent_id": agent["id"],
+        "name": "Private Chat"
+    }, headers=auth_headers).json()
+
+    # User B tries to access User A's agent
+    agent_access = client.get(f"/agents/{agent['id']}/", headers=second_user_headers)
+    assert agent_access.status_code in (403, 404)
+
+    # User B tries to access User A's chat
+    chat_access = client.get(f"/chats/{chat['id']}/", headers=second_user_headers)
+    assert chat_access.status_code in (403, 404)
 
 
 # ------------------------------------------------------------------
