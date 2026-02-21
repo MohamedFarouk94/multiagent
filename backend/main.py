@@ -46,21 +46,6 @@ def read_current_user(current_user: models.User = Depends(auth.auth_manager.get_
     return current_user
 
 
-@app.get("/users/{username}/")
-def do_action(username: str, current_user: models.User = Depends(auth.auth_manager.get_current_user)):
-    if current_user.username != username:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access forbidden"
-        )
-    #
-    # EXECUTE ACTIONS HERE
-    #
-    return {'message': 'ok'}
-
-
-####
-
 @app.post("/agents/", response_model=schemas.AgentSimple)
 def create_agent(
     agent_data: schemas.AgentCreate,
@@ -292,4 +277,3 @@ def download_audio(
         raise HTTPException(status_code=404, detail="File not found")
 
     return FileResponse(path, media_type="audio/mpeg")
-
