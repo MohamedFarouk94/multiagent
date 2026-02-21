@@ -15,17 +15,13 @@ load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 
-#
-# Token Life Span
 ACCESS_TOKEN_EXPIRE_MINUTES = 24 * 60  # In minutes
-# Change it to what's suitable for the usecase
-#
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
-def get_db(): # -> Session:
+def get_db():
     db = database.SessionLocal()
     try:
         yield db
