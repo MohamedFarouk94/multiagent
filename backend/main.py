@@ -1,3 +1,5 @@
+from sqlite3 import IntegrityError
+
 from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from . import models, schemas, database, auth
@@ -57,9 +59,12 @@ def create_agent(
         system_prompt=agent_data.system_prompt,
         user_id=current_user.id
     )
-
-    db.add(new_agent)
-    db.commit()
+    try:
+        db.add(new_agent)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Agent name already exists")
     db.refresh(new_agent)
 
     return new_agent
