@@ -328,7 +328,7 @@ The frontend is a single-page application written in vanilla JavaScript, split a
 ## Running Tests
 
 ```bash
-pytest
+pytest -v
 ```
 
 To run with coverage:
