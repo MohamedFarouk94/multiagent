@@ -133,20 +133,18 @@ def edit_agent(
     if not agent:
         raise HTTPException(status_code=404, detail="Agent not found")
 
-    agent.name = agent_data.name
-    agent.system_prompt = agent_data.system_prompt
-
     try:
+        nested = db.begin_nested()          # create savepoint
         agent.name = agent_data.name
         agent.system_prompt = agent_data.system_prompt
-
-        db.commit()
-        db.refresh(agent)
-
+        db.flush()                          # trigger constraint check inside savepoint
+        nested.commit()
     except IntegrityError:
-        db.rollback()
+        nested.rollback()                   # roll back to savepoint only
         raise HTTPException(status_code=400, detail="Agent name already exists")
 
+    db.commit()
+    db.refresh(agent)
     return agent
 
 
