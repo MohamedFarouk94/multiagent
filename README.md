@@ -211,11 +211,11 @@ All endpoints except `/register/` and `/login/` require a Bearer token in the `A
 
 ### Auth
 
-| Method | Endpoint       | Description                  |
-|--------|----------------|------------------------------|
-| POST   | `/register/`   | Create a new user account    |
-| POST   | `/login/`      | Authenticate and get a token |
-| GET    | `/users/me/`   | Get current user info        |
+| Method | Endpoint       | Description                  |Notes                          |
+|--------|----------------|------------------------------|-------------------------------|
+| POST   | `/register/`   | Create a new user account    |                               |
+| POST   | `/login/`      | Authenticate and get a token |                               |
+| GET    | `/users/me/`   | Get current user info        |For testing only. Unused in app|
 
 ### Agents
 
@@ -228,13 +228,13 @@ All endpoints except `/register/` and `/login/` require a Bearer token in the `A
 
 ### Chats & Messages
 
-| Method | Endpoint                            | Description                                      |
-|--------|-------------------------------------|--------------------------------------------------|
+| Method | Endpoint                            | Description                                      |Notes
+|--------|-------------------------------------|--------------------------------------------------|--------------------------------------------------------------------------------------------------|
 | POST   | `/chats/`                           | Create a new chat session for an agent           |
 | GET    | `/chats/{chat_id}/messages/`        | Get paginated messages (`start_index`, `n`)      |
-| POST   | `/chats/{chat_id}/upload-audio/`    | Upload a user audio file (WAV), returns message ID |
-| POST   | `/send/`                            | Send a message (text or audio) and get a reply  |
-| GET    | `/messages/{message_id}/download/`  | Download an audio message (MP3/WAV)              |
+| POST   | `/chats/{chat_id}/upload-audio/`    | Upload a user audio file (WAV), returns message ID | You have to upload before calling '/send/'                                                                                                |
+| POST   | `/send/`                            | Send a message (text or audio) and get a reply  | For audio messages, you have to upload the WAV file first and then send an empty text with the `audio` key set to the id recieved from upload request|
+| GET    | `/messages/{message_id}/download/`  | Download an audio message (MP3/WAV)              | with the `audio`key set to the id recieved from the '/send/' request
 
 **Send request payload:**
 
@@ -246,7 +246,7 @@ All endpoints except `/register/` and `/login/` require a Bearer token in the `A
 }
 ```
 
-For audio messages, first upload via `/chats/{chat_id}/upload-audio/`, then pass the returned `message_id` as the `audio` field in `/send/`.
+For audio messages, first upload wav file via `/chats/{chat_id}/upload-audio/`, then pass the returned `message_id` as the `audio` field in `/send/`.
 
 ---
 
@@ -332,10 +332,3 @@ pytest --cov=backend --cov-report=term-missing
 Test configuration is in `pytest.ini`.
 
 ---
-
-## Contributing
-
-1. Fork the repository and create your feature branch (`git checkout -b feature/my-feature`).
-2. Make your changes with appropriate test coverage.
-3. Ensure all tests pass (`pytest`).
-4. Open a pull request with a clear description of your changes.
