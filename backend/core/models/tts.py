@@ -17,12 +17,3 @@ def synthesize_speech(text: str, voice: str = "alloy"):
 
     return response.read()
 
-
-# Example usage
-if __name__ == "__main__":
-    audio_bytes = synthesize_speech("What is the capital of France?")
-    output_file: str = "backend/media/output.mp3"
-    with open(output_file, "wb") as f:
-        f.write(audio_bytes)  # response is raw binary content
-    print("Saved speech to:", output_file)
-

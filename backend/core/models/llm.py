@@ -20,9 +20,3 @@ def ask_llm(prompt: str, model: str = "gpt-4o", max_tokens: int = 300) -> str:
     )
 
     return response.choices[0].message.content
-
-
-# Example usage
-if __name__ == "__main__":
-    answer = ask_llm("What is the Capital of France?")
-    print(answer)

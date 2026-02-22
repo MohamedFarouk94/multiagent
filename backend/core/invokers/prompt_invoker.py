@@ -33,14 +33,3 @@ def invoke_prompt(data):
     return data
 
 prompt_invoker = RunnableLambda(invoke_prompt)
-
-# example
-if __name__ == '__main__':
-    data = {}
-    data['agent_name'] = 'Geography Expert'
-    data['system_prompt'] = 'You are expert at geography, countries, capitals, etc'
-    data['history'] = []
-    data['user_text'] = "What's the capital of France?"
-
-    data = prompt_invoker.invoke(data)
-    print(data['prompt'])
