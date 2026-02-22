@@ -304,6 +304,40 @@ def test_send_text_message(client, auth_headers):
     assert response.json()["sender"] == "agent"
     assert "Tokyo" in response.json()["text"]
 
+# ------------------------------------------------------------------
+# Uploading Wrong File Format
+# ------------------------------------------------------------------
+
+def test_upload_non_wav_file(client, auth_headers, tmp_path):
+    """Uploading a non-WAV file should be rejected with HTTP 415."""
+    # Create a dummy agent and chat to upload against
+    agent_resp = client.post(
+        "/agents/",
+        json={"name": "Test Agent", "system_prompt": "You are helpful."},
+        headers=auth_headers,
+    )
+    assert agent_resp.status_code == 200
+    agent_id = agent_resp.json()["id"]
+
+    chat_resp = client.post(
+        "/chats/",
+        json={"agent_id": agent_id, "name": "Test Chat"},
+        headers=auth_headers,
+    )
+    assert chat_resp.status_code == 200
+    chat_id = chat_resp.json()["id"]
+
+    # Use the spam.txt fixture from tests/media
+    spam_path = "tests/media/spam.txt"
+    with open(spam_path, "rb") as f:
+        response = client.post(
+            f"/chats/{chat_id}/upload-audio/",
+            files={"file": ("spam.txt", f, "text/plain")},
+            headers=auth_headers,
+        )
+
+    assert response.status_code == 415
+    assert "WAV" in response.json()["detail"]
 
 #-------------------------------------------------------------------
 # AUDIO FLOW TEST

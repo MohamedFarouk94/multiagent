@@ -212,6 +212,18 @@ def upload_audio(
     if not chat:
         raise HTTPException(status_code=404, detail="Chat not found")
 
+    # Read file content once so we can inspect and then save it
+    file_bytes = file.file.read()
+
+    # Validate by magic bytes: WAV files begin with "RIFF" and contain "WAVE" at offset 8
+    is_wav = len(file_bytes) >= 12 and file_bytes[:4] == b"RIFF" and file_bytes[8:12] == b"WAVE"
+
+    if not is_wav:
+        raise HTTPException(
+            status_code=415,
+            detail="Unsupported file type. Only WAV audio files are accepted."
+        )
+
     message = models.Message(
         chat_id=chat.id,
         is_agent=False,
@@ -228,7 +240,7 @@ def upload_audio(
     file_path = f"backend/media/user_{current_user.username}_{message.id}.wav"
 
     with open(file_path, "wb") as buffer:
-        buffer.write(file.file.read())
+        buffer.write(file_bytes)
 
     return {"message_id": message.id}
 
