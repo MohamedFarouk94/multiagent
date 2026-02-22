@@ -14,14 +14,36 @@ from .chain_wrapper import prepare_data, run_chain
 
 from fastapi.middleware.cors import CORSMiddleware
 
+tags_metadata = [
+    {
+        "name": "Auth",
+        "description": "Register, log in, and inspect the current session.",
+    },
+    {
+        "name": "Agents",
+        "description": "Create and manage AI agents. Each agent has a name and a system prompt that defines its persona.",
+    },
+    {
+        "name": "Chats",
+        "description": "Open chat sessions against a specific agent and page through message history.",
+    },
+    {
+        "name": "Messages",
+        "description": "Send text or voice messages and download audio responses.",
+    },
+]
+
+
 app = FastAPI(
     title="MultiAgent API",
-    description="API for managing users, agents, chats, and messages with audio support",
+    description=(
+        "API for creating custom AI agents and conversing with them via text or voice.\n\n"
+        "**Authentication:** use `/login/` to obtain a bearer token, then click "
+        "**Authorize** and paste it in."
+    ),
     version="1.0.0",
-    contact={
-        "name": "Mohamed Farouk",
-        "email": "mohamedfarouk1994@gmail.com",
-    },
+    contact={"name": "Mohamed Farouk", "email": "mohamedfarouk1994@gmail.com"},
+    openapi_tags=tags_metadata,
 )
 
 app.add_middleware(

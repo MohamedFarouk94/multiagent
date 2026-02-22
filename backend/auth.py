@@ -6,7 +6,7 @@ from passlib.context import CryptContext
 from fastapi import HTTPException, Depends, status
 from sqlalchemy.orm import Session
 from . import database, models
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 
 
@@ -18,7 +18,7 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 24 * 60  # In minutes
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+oauth2_scheme = HTTPBearer()
 
 
 def get_db():
@@ -109,7 +109,11 @@ class JWTAuthManager:
         except JWTError:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
-    def get_current_user(self, db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)) -> models.User:
+    def get_current_user(
+        self,
+        db: Session = Depends(get_db),
+        credentials: HTTPAuthorizationCredentials = Depends(oauth2_scheme)
+    ) -> models.User:
         """
         Retrieves the current user based on the provided JWT access token.
 
@@ -123,6 +127,7 @@ class JWTAuthManager:
         Raises:
             HTTPException: If the token is invalid or the user is not found.
         """
+        token = credentials.credentials  # ← extract the raw token string
         token_data = self._decode_access_token(token)
         username: str = token_data.get("sub")
         if username is None:
