@@ -144,6 +144,7 @@ SECRET_KEY=your-jwt-secret-key
 |------------------|------------------------------------------------|
 | `OPENAI_API_KEY` | Your OpenAI API key                            |
 | `SECRET_KEY`     | Secret used to sign JWT tokens                 |
+| `DATABASE_URL`   | Database URL                                   |
 
 ---
 
