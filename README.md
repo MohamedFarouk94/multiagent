@@ -1,7 +1,7 @@
 # MultiAgent
 
 <p align="center">
-  <img src="logo.png" alt="Alt text" width="500"/>
+  <img src="logo.jpg" alt="Alt text" width="500"/>
 </p>
 
 
