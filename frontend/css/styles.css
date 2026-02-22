@@ -70,7 +70,7 @@ html, body {
 
 .auth-logo {
   font-family: var(--font-head);
-  font-size: 2rem;
+  font-size: 4rem;
   color: var(--blue);
   text-align: center;
   letter-spacing: -1px;
@@ -79,7 +79,7 @@ html, body {
 .auth-subtitle {
   text-align: center;
   color: var(--muted);
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
   font-size: .93rem;
 }
 

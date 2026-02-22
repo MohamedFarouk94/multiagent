@@ -1,6 +1,9 @@
 # MultiAgent
 
-![Alt text](logo.jpg)
+<p align="center">
+  <img src="logo.png" alt="Alt text" width="500"/>
+</p>
+
 
 A full-stack web application that lets users create and chat with custom AI agents powered by OpenAI. Each agent has its own system prompt (persona/instructions), and conversations support both text and voice — users can speak to agents and receive spoken responses back.
 
