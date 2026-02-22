@@ -108,6 +108,38 @@ def get_agent(
     return agent
 
 
+@app.put("/agents/{agent_id}/", response_model=schemas.AgentSimple, tags=["Agents"])
+def edit_agent(
+    agent_id: int,
+    agent_data: schemas.AgentCreate,
+    db: Session = Depends(auth.get_db),
+    current_user: models.User = Depends(auth.auth_manager.get_current_user)
+):
+    agent = db.query(models.Agent).filter(
+        models.Agent.id == agent_id,
+        models.Agent.user_id == current_user.id
+    ).first()
+
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+
+    agent.name = agent_data.name
+    agent.system_prompt = agent_data.system_prompt
+
+    try:
+        agent.name = agent_data.name
+        agent.system_prompt = agent_data.system_prompt
+
+        db.commit()
+        db.refresh(agent)
+
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Agent name already exists")
+
+    return agent
+
+
 @app.post("/chats/", response_model=schemas.ChatSimple, tags=['Chats'])
 def create_chat(
     chat_data: schemas.ChatCreate,

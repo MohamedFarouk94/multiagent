@@ -189,6 +189,57 @@ def test_agent_name_uniqueness_per_user(client, auth_headers, second_user_header
     }, headers=second_user_headers)
     assert response3.status_code == 200
 
+
+def test_edit_agent_and_prevent_duplicate_name(client, auth_headers):
+    # ----------------------------------------------------
+    # 1) Create two agents
+    # ----------------------------------------------------
+    agent1 = client.post("/agents/", json={
+        "name": "Agent One",
+        "system_prompt": "Prompt 1"
+    }, headers=auth_headers).json()
+
+    agent2 = client.post("/agents/", json={
+        "name": "Agent Two",
+        "system_prompt": "Prompt 2"
+    }, headers=auth_headers).json()
+
+    # ----------------------------------------------------
+    # 2) Edit agent1 successfully
+    # ----------------------------------------------------
+    edit_response = client.put(
+        f"/agents/{agent1['id']}/",
+        json={
+            "name": "Updated Agent",
+            "system_prompt": "Updated prompt"
+        },
+        headers=auth_headers
+    )
+
+    assert edit_response.status_code == 200
+    assert edit_response.json()["name"] == "Updated Agent"
+
+    # ----------------------------------------------------
+    # 3) Request agent1 after update
+    # ----------------------------------------------------
+    edited_response = client.get(f"agents/{agent1['id']}", headers=auth_headers)
+    assert edited_response.status_code == 200
+    assert edited_response.json()['name'] == 'Updated Agent'
+
+    # ----------------------------------------------------
+    # 3) Try renaming agent1 to agent2's name → should fail
+    # ----------------------------------------------------
+    duplicate_response = client.put(
+        f"/agents/{agent1['id']}/",
+        json={
+            "name": "Agent Two",
+            "system_prompt": "Another prompt"
+        },
+        headers=auth_headers
+    )
+
+    assert duplicate_response.status_code in (400, 409)
+
 # ------------------------------------------------------------------
 # CHAT TESTS
 # ------------------------------------------------------------------
@@ -237,7 +288,6 @@ def test_user_cannot_access_other_users_resources(client, auth_headers, second_u
     chat_access = client.get(f"/chats/{chat['id']}/", headers=second_user_headers)
     assert chat_access.status_code in (403, 404)
 
-
 # ------------------------------------------------------------------
 # TEXT MESSAGE TEST
 # ------------------------------------------------------------------
@@ -255,11 +305,92 @@ def test_send_text_message(client, auth_headers):
     assert "Tokyo" in response.json()["text"]
 
 
-# ------------------------------------------------------------------
-# AUDIO FLOW TEST (Geography)
+#-------------------------------------------------------------------
+# AUDIO FLOW TEST
 # ------------------------------------------------------------------
 
-def test_audio_question_geography(client, auth_headers):
+def test_audio_only_chat(client, auth_headers):
+    # ----------------------------------------------------
+    # 1) Create agent and chat
+    # ----------------------------------------------------
+    agent = client.post("/agents/", json={
+        "name": "Football Expert",
+        "system_prompt": "You are a football expert."
+    }, headers=auth_headers).json()
+
+    chat = client.post("/chats/", json={
+        "agent_id": agent["id"],
+        "name": "Football Chat"
+    }, headers=auth_headers).json()
+
+    # ----------------------------------------------------
+    # 2) Upload AUDIO question
+    # ----------------------------------------------------
+    with open("tests/media/ucl_2014_question.wav", "rb") as f:
+        upload = client.post(
+            f"/chats/{chat['id']}/upload-audio/",
+            headers=auth_headers,
+            files={"file": ("question.wav", f, "audio/wav")}
+        )
+
+    assert upload.status_code == 200
+    audio_message_id = upload.json()["message_id"]
+
+    # ----------------------------------------------------
+    # 3) Send audio message
+    # ----------------------------------------------------
+    audio_response = client.post("/send/", json={
+        "chat_id": chat["id"],
+        "audio": audio_message_id
+    }, headers=auth_headers)
+
+    assert audio_response.status_code == 200
+    assert audio_response.json()["is_audio"] is True
+
+    agent_audio_id = audio_response.json()["id"]
+
+    # ----------------------------------------------------
+    # 4) Download agent audio response
+    # ----------------------------------------------------
+    download = client.get(
+        f"/messages/{agent_audio_id}/download/",
+        headers=auth_headers
+    )
+
+    assert download.status_code == 200
+
+    output_path = "tests/media/ucl_2014_answer.mp3"
+    with open(output_path, "wb") as f:
+        f.write(download.content)
+
+    assert os.path.exists(output_path)
+
+    # ----------------------------------------------------
+    # 5) Fetch chat messages
+    # ----------------------------------------------------
+    chat_messages = client.get(
+        f"/chats/{chat['id']}/messages/",
+        headers=auth_headers
+    )
+
+    assert chat_messages.status_code == 200
+    messages = chat_messages.json()
+
+    # ----------------------------------------------------
+    # 6) Assert exactly 2 messages exist
+    # ----------------------------------------------------
+    assert len(messages) == 2
+
+    assert messages[0]["sender"] == "user"
+    assert messages[1]["sender"] == "agent"
+    assert messages[1]["is_audio"] is True
+
+
+# ------------------------------------------------------------------
+# TEXT-AUDIO FLOW TEST
+# ------------------------------------------------------------------
+
+def test_text_audio_chat(client, auth_headers):
     # ----------------------------------------------------
     # 1) Create agent and chat
     # ----------------------------------------------------
@@ -347,84 +478,3 @@ def test_audio_question_geography(client, auth_headers):
     assert messages[1]["sender"] == "agent"
     assert messages[2]["sender"] == "user"
     assert messages[3]["sender"] == "agent"
-
-
-# ------------------------------------------------------------------
-# AUDIO FLOW TEST (Football)
-# ------------------------------------------------------------------
-
-def test_audio_question_football(client, auth_headers):
-    # ----------------------------------------------------
-    # 1) Create agent and chat
-    # ----------------------------------------------------
-    agent = client.post("/agents/", json={
-        "name": "Football Expert",
-        "system_prompt": "You are a football expert."
-    }, headers=auth_headers).json()
-
-    chat = client.post("/chats/", json={
-        "agent_id": agent["id"],
-        "name": "Football Chat"
-    }, headers=auth_headers).json()
-
-    # ----------------------------------------------------
-    # 2) Upload AUDIO question
-    # ----------------------------------------------------
-    with open("tests/media/ucl_2014_question.wav", "rb") as f:
-        upload = client.post(
-            f"/chats/{chat['id']}/upload-audio/",
-            headers=auth_headers,
-            files={"file": ("question.wav", f, "audio/wav")}
-        )
-
-    assert upload.status_code == 200
-    audio_message_id = upload.json()["message_id"]
-
-    # ----------------------------------------------------
-    # 3) Send audio message
-    # ----------------------------------------------------
-    audio_response = client.post("/send/", json={
-        "chat_id": chat["id"],
-        "audio": audio_message_id
-    }, headers=auth_headers)
-
-    assert audio_response.status_code == 200
-    assert audio_response.json()["is_audio"] is True
-
-    agent_audio_id = audio_response.json()["id"]
-
-    # ----------------------------------------------------
-    # 4) Download agent audio response
-    # ----------------------------------------------------
-    download = client.get(
-        f"/messages/{agent_audio_id}/download/",
-        headers=auth_headers
-    )
-
-    assert download.status_code == 200
-
-    output_path = "tests/media/ucl_2014_answer.mp3"
-    with open(output_path, "wb") as f:
-        f.write(download.content)
-
-    assert os.path.exists(output_path)
-
-    # ----------------------------------------------------
-    # 5) Fetch chat messages
-    # ----------------------------------------------------
-    chat_messages = client.get(
-        f"/chats/{chat['id']}/messages/",
-        headers=auth_headers
-    )
-
-    assert chat_messages.status_code == 200
-    messages = chat_messages.json()
-
-    # ----------------------------------------------------
-    # 6) Assert exactly 2 messages exist
-    # ----------------------------------------------------
-    assert len(messages) == 2
-
-    assert messages[0]["sender"] == "user"
-    assert messages[1]["sender"] == "agent"
-    assert messages[1]["is_audio"] is True
