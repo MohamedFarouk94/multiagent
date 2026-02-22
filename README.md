@@ -1,5 +1,7 @@
 # MultiAgent
 
+![Alt text](logo.jpg)
+
 A full-stack web application that lets users create and chat with custom AI agents powered by OpenAI. Each agent has its own system prompt (persona/instructions), and conversations support both text and voice — users can speak to agents and receive spoken responses back.
 
 ---
@@ -251,6 +253,9 @@ For audio messages, first upload wav file via `/chats/{chat_id}/upload-audio/`, 
 ---
 
 ## LangChain Processing Chains
+
+![Alt text](chains_diagram.jpg)
+
 
 Message processing uses composable LangChain `RunnableLambda` pipelines defined in `backend/core/chains.py`:
 
