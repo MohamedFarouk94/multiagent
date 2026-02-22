@@ -1,7 +1,7 @@
 # MultiAgent
 
 <p align="center">
-  <img src="logo.jpg" alt="Alt text" width="500"/>
+  <img src="images/logo.jpg" alt="Alt text" width="500"/>
 </p>
 
 
@@ -257,7 +257,7 @@ For audio messages, first upload wav file via `/chats/{chat_id}/upload-audio/`, 
 
 ## LangChain Processing Chains
 
-![Alt text](chains_diagram.jpg)
+![Alt text](images/chains_diagram.jpg)
 
 
 Message processing uses composable LangChain `RunnableLambda` pipelines defined in `backend/core/chains.py`:
