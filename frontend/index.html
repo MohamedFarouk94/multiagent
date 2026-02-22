@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MultiAgent Chat</title>
+
+  <!-- Google Fonts: Nunito for body text, Poppins for headings -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- =============================================
+       AUTH PAGE (Login / Register)
+       Shown when user is not logged in.
+  ============================================= -->
+  <div id="auth-page" class="auth-page">
+    <div class="auth-card">
+      <h1 class="auth-logo">MultiAgent</h1>
+      <p class="auth-subtitle">Your AI chat platform</p>
+
+      <!-- Tab switcher -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login">Login</button>
+        <button class="auth-tab" data-tab="register">Register</button>
+      </div>
+
+      <!-- Login Form -->
+      <form id="login-form" class="auth-form active">
+        <div class="field-group">
+          <label>Username</label>
+          <input type="text" id="login-username" placeholder="Enter username" required />
+        </div>
+        <div class="field-group">
+          <label>Password</label>
+          <input type="password" id="login-password" placeholder="Enter password" required />
+        </div>
+        <div id="login-error" class="auth-error hidden"></div>
+        <button type="submit" class="btn-primary">Login</button>
+      </form>
+
+      <!-- Register Form -->
+      <form id="register-form" class="auth-form">
+        <div class="field-group">
+          <label>Username</label>
+          <input type="text" id="reg-username" placeholder="Choose a username" required />
+        </div>
+        <div class="field-group">
+          <label>Email</label>
+          <input type="email" id="reg-email" placeholder="your@email.com" required />
+        </div>
+        <div class="field-group">
+          <label>Password</label>
+          <input type="password" id="reg-password" placeholder="Choose a password" required />
+        </div>
+        <div class="field-group">
+          <label>Confirm Password</label>
+          <input type="password" id="reg-password2" placeholder="Repeat password" required />
+        </div>
+        <div id="register-error" class="auth-error hidden"></div>
+        <button type="submit" class="btn-primary">Create Account</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- =============================================
+       MAIN APP PAGE
+       Shown after successful login.
+  ============================================= -->
+  <div id="app-page" class="app-page hidden">
+
+    <!-- ---- LEFT PANEL: Agents ---- -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>Agents</h2>
+        <!-- Logout button -->
+        <button id="logout-btn" class="btn-icon" title="Logout">&#x2715;</button>
+      </div>
+
+      <!-- List of agents -->
+      <ul id="agents-list" class="agents-list"></ul>
+
+      <!-- Create new agent form -->
+      <div class="create-agent-panel">
+        <input type="text" id="new-agent-name" placeholder="New agent name" />
+        <textarea id="new-agent-prompt" placeholder="New agent prompt (e.g., You are a helpful dental assistant.)"></textarea>
+        <button id="create-agent-btn" class="btn-green">Create Agent</button>
+      </div>
+    </aside>
+
+    <!-- ---- RIGHT PANEL: Chat ---- -->
+    <main class="chat-panel">
+
+      <!-- Chat top bar -->
+      <header class="chat-header">
+        <div class="chat-header-left">
+          <h2 id="active-agent-name">Select an agent</h2>
+          <!-- Edit agent button (hidden until agent selected) -->
+          <button id="edit-agent-btn" class="btn-secondary hidden">Edit Agent</button>
+        </div>
+        <div class="chat-header-right">
+          <label class="chat-session-label">Chat Session:</label>
+          <!-- Dropdown of chats for the selected agent -->
+          <select id="chats-select" class="chats-select"></select>
+          <button id="new-chat-btn" class="btn-dark">New Chat</button>
+        </div>
+      </header>
+
+      <!-- Messages area -->
+      <div id="messages-area" class="messages-area">
+        <!-- Messages are injected here by chat.js -->
+        <div id="chat-begin-label" class="chat-begin-label hidden">— Chat begins —</div>
+      </div>
+
+      <!-- Message input area -->
+      <footer class="message-input-area">
+        <!-- Audio preview bar (shown after recording) -->
+        <div id="audio-preview" class="audio-preview hidden">
+          <span id="audio-preview-label">🎙 Recording ready</span>
+          <button id="audio-discard-btn" class="btn-icon-red" title="Discard">&#x2715;</button>
+        </div>
+
+        <div class="input-row">
+          <input type="text" id="message-input" placeholder="Type your message or use voice..." />
+          <button id="send-btn" class="btn-send">Send</button>
+          <button id="mic-btn" class="btn-mic" title="Record audio">🎤</button>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <!-- =============================================
+       EDIT AGENT MODAL
+  ============================================= -->
+  <div id="edit-agent-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <h3>Edit Agent</h3>
+      <div class="field-group">
+        <label>Agent Name</label>
+        <input type="text" id="edit-agent-name" placeholder="Agent name" />
+      </div>
+      <div class="field-group">
+        <label>System Prompt</label>
+        <textarea id="edit-agent-prompt" placeholder="System prompt"></textarea>
+      </div>
+      <div id="edit-agent-error" class="auth-error hidden"></div>
+      <div class="modal-actions">
+        <button id="edit-agent-cancel" class="btn-secondary">Cancel</button>
+        <button id="edit-agent-save" class="btn-primary">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============================================
+       SCRIPTS — loaded in dependency order
+  ============================================= -->
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/agents.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/chat.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

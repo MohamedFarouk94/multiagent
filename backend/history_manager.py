@@ -68,7 +68,7 @@ def retrieve_messages_for_user(
     start = len(messages) + start_index if start_index < 0 else start_index
 
     if start < 0:
-        start = 0
+        return []
     if start >= len(messages):
         return []
 

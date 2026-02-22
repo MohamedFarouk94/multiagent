@@ -12,6 +12,8 @@ import os
 from .history_manager import retrieve_messages_for_user
 from .chain_wrapper import prepare_data, run_chain
 
+from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI(
     title="MultiAgent API",
     description="API for managing users, agents, chats, and messages with audio support",
@@ -20,6 +22,14 @@ app = FastAPI(
         "name": "Mohamed Farouk",
         "email": "mohamedfarouk1994@gmail.com",
     },
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # for development only
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 models.Base.metadata.create_all(bind=database.engine)
