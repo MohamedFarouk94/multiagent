@@ -1,0 +1,478 @@
+{
+	"info": {
+		"_postman_id": "0e35d1df-7227-44d5-9d98-c38c36634950",
+		"name": "Multi-Agent Backend API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "38959591"
+	},
+	"item": [
+		{
+			"name": "register",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"username\": \"user1\",\n  \"email\": \"user1@test.com\",\n  \"password\": \"password1\"\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/register/\n",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"register",
+						"\n"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "login user1",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let response = pm.response.json();",
+							"pm.environment.set(\"access_token\", response.access_token);"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"username\": \"user1\",\n  \"password\": \"password1\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/login/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"login",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "who am i",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/users/me",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"users",
+						"me"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "create agent",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.environment.set(\"agent_id\", pm.response.json().id);"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Geography Expert\",\n  \"system_prompt\": \"You are expert at geography, countries, capitals, etc\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/agents",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"agents"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get agents",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/agents",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"agents"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get agent details",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/agents/{{agent_id}}",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"agents",
+						"{{agent_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "create chat",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.environment.set(\"chat_id\", pm.response.json().id);"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"agent_id\": {{agent_id}},\n  \"name\": \"\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/chats/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"chats",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get chat messages",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/chats/{{chat_id}}/messages/?start_index=-1&n=10",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"chats",
+						"{{chat_id}}",
+						"messages",
+						""
+					],
+					"query": [
+						{
+							"key": "start_index",
+							"value": "-1"
+						},
+						{
+							"key": "n",
+							"value": "10"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "send text message",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"chat_id\": {{chat_id}},\n  \"text\": \"What was the capital of England before London?\",\n  \"audio\": null\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/send/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"send",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "upload audio",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let response = pm.response.json();",
+							"pm.environment.set(\"audio_message_id\", response.message_id);"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "postman-cloud:///1f10e73c-268c-44f0-b9f2-0e47c5da2b82"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{base_url}}/chats/{{chat_id}}/upload-audio/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"chats",
+						"{{chat_id}}",
+						"upload-audio",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "send audio message",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.environment.set(\"agent_audio_message_id\", pm.response.json().id);"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"chat_id\": {{chat_id}},\n  \"text\": \"\",\n  \"audio\": {{audio_message_id}}\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/send/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"send",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "download audio",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/messages/{{agent_audio_message_id}}/download/",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"messages",
+						"{{agent_audio_message_id}}",
+						"download",
+						""
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
