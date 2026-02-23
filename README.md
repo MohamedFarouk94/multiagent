@@ -320,6 +320,8 @@ The frontend is a single-page application written in vanilla JavaScript, split a
 
 ## Running Tests
 
+First you need to have the files [here]() in `tests/media/`
+
 ```bash
 pytest -v
 ```
@@ -336,7 +338,7 @@ Test configuration is in `pytest.ini`.
 
 ## Video Examples
 
-Three video examples can be found [here](https://drive.google.com/drive/folders/1LGkyrXAwwBtAQHrOTb_wOfnHn7oW_NKu)
+Three video examples can be found [here](https://drive.google.com/drive/folders/1x626cOk_5T1Tcn5oMXUq9WqV8xOf4ada?usp=drive_link)
 
 - `edit_agent_new_chat_text_and_audio.mp4`: A video shows editing an agent by adding some clarifications to its system prompt, then opening new chat and exchanging messages with the agent in both text and audio.
 - `login_select_chat_and_scroll_up.mp4`: A video shows the login process, and opening a certain chat with ~30 messages and scrolling up to the top of the chat. The app retrieves messages ten by ten whenever the scroll reachess the top until there's no more messages to retrieve. 
