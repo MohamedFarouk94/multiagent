@@ -24,7 +24,7 @@ A full-stack web application that lets users create and chat with custom AI agen
 - [Database Schema](#database-schema)
 - [Frontend](#frontend)
 - [Running Tests](#running-tests)
-- [Contributing](#contributing)
+- [Video Examples](#video-examples)
 
 ---
 
@@ -138,6 +138,7 @@ Create a `.env` file in the project root:
 ```env
 OPENAI_API_KEY=sk-...
 SECRET_KEY=your-jwt-secret-key
+DATABASE_URL=sqlite:///./backend/app.db
 ```
 
 | Variable         | Description                                    |
@@ -213,44 +214,35 @@ Navigate to `http://localhost:8000/docs` for the Swagger UI.
 
 ## API Reference
 
-All endpoints except `/register/` and `/login/` require a Bearer token in the `Authorization` header.
+All endpoints except `/register/` and `/login/` require a `Bearer` token in the `Authorization` header.
 
 ### Auth
 
-| Method | Endpoint       | Description                  |Notes                          |
-|--------|----------------|------------------------------|-------------------------------|
-| POST   | `/register/`   | Create a new user account    |                               |
-| POST   | `/login/`      | Authenticate and get a token |                               |
-| GET    | `/users/me/`   | Get current user info        |For testing only. Unused in app|
+| Method | Endpoint | Description | Request Body | Response Body | Notes |
+|--------|----------|-------------|--------------|---------------|-------|
+| POST | `/register/` | Create a new user account | `{"username": "str", "email": "str", "password": "str"}` | `{"id": "int", "username": "str", "email": "str"}` | Returns 400 if username or email already taken |
+| POST | `/login/` | Authenticate and get a token | `{"username": "str", "password": "str"}` | `{"access_token": "str", "token_type": "bearer"}` | Returns 401 on invalid credentials |
+| GET | `/users/me/` | Get current user info | — | `{"id": "int", "username": "str", "email": "str"}` | For testing only. Unused in app |
 
 ### Agents
 
-| Method | Endpoint             | Description                          |
-|--------|----------------------|--------------------------------------|
-| POST   | `/agents/`           | Create a new agent                   |
-| GET    | `/agents/`           | List all agents for the current user |
-| GET    | `/agents/{id}/`      | Get agent details (with chat list)   |
-| PUT    | `/agents/{id}/`      | Update an agent's name/system prompt |
+| Method | Endpoint | Description | Request Body | Response Body | Notes |
+|--------|----------|-------------|--------------|---------------|-------|
+| POST | `/agents/` | Create a new agent | `{"name": "str", "system_prompt": "str"}` | `{"id": "int", "name": "str"}` | Agent names must be unique per user. Returns 400 on duplicate |
+| GET | `/agents/` | List all agents for the current user | — | `[{"id": "int", "name": "str"}]` | |
+| GET | `/agents/{agent_id}/` | Get agent details including its chat list | — | `{"id": "int", "name": "str", "system_prompt": "str", "chats": [{"id": "int", "name": "str"}]}` | Chats are ordered by most recently active. Returns 404 if not found |
+| PUT | `/agents/{agent_id}/` | Update an agent's name or system prompt | `{"name": "str", "system_prompt": "str"}` | `{"id": "int", "name": "str"}` | Returns 400 on duplicate name, 404 if not found |
 
 ### Chats & Messages
 
-| Method | Endpoint                            | Description                                      |Notes
-|--------|-------------------------------------|--------------------------------------------------|--------------------------------------------------------------------------------------------------|
-| POST   | `/chats/`                           | Create a new chat session for an agent           |
-| GET    | `/chats/{chat_id}/messages/`        | Get paginated messages (`start_index`, `n`)      |
-| POST   | `/chats/{chat_id}/upload-audio/`    | Upload a user audio file (WAV), returns message ID | You have to upload before calling '/send/'                                                                                                |
-| POST   | `/send/`                            | Send a message (text or audio) and get a reply  | For audio messages, you have to upload the WAV file first and then send an empty text with the `audio` key set to the id recieved from upload request|
-| GET    | `/messages/{message_id}/download/`  | Download an audio message (MP3/WAV)              | with the `audio`key set to the id recieved from the '/send/' request
+| Method | Endpoint | Description | Request Body | Response Body | Notes |
+|--------|----------|-------------|--------------|---------------|-------|
+| POST | `/chats/` | Create a new chat session for an agent | `{"agent_id": "int", "name": "str (optional)"}` | `{"id": "int", "name": "str"}` | Name is auto-generated from timestamp if omitted. Returns 404 if agent not found |
+| GET | `/chats/{chat_id}/messages/` | Get paginated messages | — | `[{"id": "int", "sent_at": "datetime", "sender": "user\|agent", "is_audio": "bool", "text": "str"}]` | Query params: `start_index` (default `-1` = latest) and `n` (default `10`). Pass the lowest `id` from the previous response as `start_index` to fetch the next page |
+| POST | `/chats/{chat_id}/upload-audio/` | Upload a WAV file to use as a voice message | `multipart/form-data` — field `file`: WAV audio | `{"message_id": "int"}` | Must be called before `/send/` when sending voice. Only WAV files accepted — returns 415 otherwise |
+| POST | `/send/` | Send a message and receive the agent's reply | `{"chat_id": "int", "text": "str (optional)", "audio": "int (optional)"}` | `{"id": "int", "sent_at": "datetime", "sender": "agent", "is_audio": "bool", "text": "str"}` | Provide either `text` or `audio` (a `message_id` from `/upload-audio/`), not both. When `is_audio` is true in the response, `text` is empty — fetch the audio via `/download/` |
+| GET | `/messages/{message_id}/download/` | Download an audio message | — | Raw audio file stream | Agent responses are `MP3`, user uploads are `WAV`. Returns 400 if the message is not audio, 404 if the file is missing |
 
-**Send request payload:**
-
-```json
-{
-  "chat_id": 1,
-  "text": "Hello!",
-  "audio": null
-}
-```
 
 For audio messages, first upload wav file via `/chats/{chat_id}/upload-audio/`, then pass the returned `message_id` as the `audio` field in `/send/`.
 
