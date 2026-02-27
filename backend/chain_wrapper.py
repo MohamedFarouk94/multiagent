@@ -18,11 +18,13 @@ def prepare_data(message: Message) -> Dict:
     agent = chat.agent
     user = agent.user
 
+    history = retrieve_messages_for_llm(chat, n=11)
+
     data = {
         "message_id": message.id,
         "agent_name": agent.name,
         "system_prompt": agent.system_prompt,
-        "history": retrieve_messages_for_llm(chat),
+        "history": history[:-1] if history else [],  # Last message will either be the new message, or an audio message but its text is still empty
         "user_text": message.text,
         "is_audio": message.is_audio,
         "user_audio": ""
