@@ -302,6 +302,10 @@ def send(
     data = prepare_data(message)
     output = run_chain(data)
 
+    if message.is_audio and "user_text" in output:
+        message.text = output["user_text"]
+        db.add(message)
+
     agent_message = models.Message(
         chat_id=chat.id,
         is_agent=True,
